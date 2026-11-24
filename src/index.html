@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReproChip</title>
+  <script src="theme-boot.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><img class="logo" src="logo.png" alt="" aria-hidden="true"><span>ReproChip</span><span class="ver">v0.3</span></div>
+    <div class="vehicle" id="vehicleLabel"></div>
+    <div class="status">
+      <span id="connPill" class="pill off"><span class="dot" aria-hidden="true"></span><span class="txt">Desconectado</span></span>
+      <span id="protoLabel" class="muted small"></span>
+      <span id="voltLabel" class="muted small"></span>
+      <span class="pill ro" title="ReproChip nunca escribe en la centralita">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        Solo lectura
+      </span>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="nav">
+    <button data-section="conn" class="active">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v6a5 5 0 0 1-10 0z M9 3v4 M15 3v4 M12 18v3"/></svg>Conexión</button>
+    <button data-section="vehicles">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16v-4l2-5h14l2 5v4z M3 16v2h3v-2 M18 16v2h3v-2 M7 12.5h.5 M16.5 12.5h.5 M5 12h14"/></svg>Vehículos</button>
+    <button data-section="ident">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 1v4 M15 1v4 M9 19v4 M15 19v4 M1 9h4 M1 15h4 M19 9h4 M19 15h4"/></svg>Identificación</button>
+    <button data-section="dtc">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z M12 10v5 M12 18v.5"/></svg>Averías</button>
+    <button data-section="live">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Datos en vivo</button>
+    <button data-section="logs">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18 M7 15l3-4 3 2 5-7 M18 6h-3 M18 6v3"/></svg>Logs</button>
+    <button data-section="bin">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6z M15 2v5h5 M9 13h6 M9 17h6"/></svg>Archivo .bin</button>
+    <button data-section="ai">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z M8 10h.5 M12 10h.5 M16 10h.5"/></svg>Asistente IA</button>
+    <button data-section="term">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3 M12 15h5"/></svg>Terminal</button>
+    <button data-section="settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3 M12 19v3 M2 12h3 M19 12h3 M4.9 4.9l2.1 2.1 M17 17l2.1 2.1 M4.9 19.1L7 17 M17 7l2.1-2.1"/></svg>Ajustes</button>
+  </nav>
+
+  <main id="main">
+    <!-- CONEXIÓN -->
+    <section id="sec-conn" class="section active">
+      <h1>Conexión</h1>
+      <p class="lead">Conecta un adaptador ELM327 u OBDLink a la toma OBD y pon el contacto. Si no tienes el coche a mano, prueba con el simulador.</p>
+      <div class="grid2">
+        <div class="card">
+          <h2>Adaptador</h2>
+          <div class="seg" id="connType" role="radiogroup">
+            <label><input type="radio" name="ctype" value="serial" checked><span>USB / Bluetooth</span></label>
+            <label><input type="radio" name="ctype" value="wifi"><span>WiFi</span></label>
+            <label><input type="radio" name="ctype" value="sim"><span>Simulador</span></label>
+          </div>
+          <div class="field" data-for="serial">
+            <label for="baud">Velocidad del puerto</label>
+            <select id="baud">
+              <option value="auto">Automática</option>
+              <option value="38400">38400 (ELM327 original)</option>
+              <option value="115200">115200 (clones y OBDLink)</option>
+              <option value="9600">9600</option>
+              <option value="57600">57600</option>
+              <option value="230400">230400</option>
+              <option value="500000">500000</option>
+            </select>
+          </div>
+          <div class="field-row" data-for="wifi">
+            <div class="field"><label for="wifiHost">IP del adaptador</label><input id="wifiHost" value="192.168.0.10"></div>
+            <div class="field narrow"><label for="wifiPort">Puerto</label><input id="wifiPort" type="number" value="35000"></div>
+          </div>
+          <p class="note" data-for="sim">Simula un C4 1.6 HDi con centralita Bosch EDC17C10 y dos averías memorizadas. Todos los datos son ficticios.</p>
+          <div class="field">
+            <label for="protocol">Protocolo</label>
+            <select id="protocol">
+              <option value="0">Automático</option>
+              <option value="6">ISO 15765-4 CAN (11 bit, 500 kbaud)</option>
+              <option value="7">ISO 15765-4 CAN (29 bit, 500 kbaud)</option>
+              <option value="8">ISO 15765-4 CAN (11 bit, 250 kbaud)</option>
+              <option value="9">ISO 15765-4 CAN (29 bit, 250 kbaud)</option>
+              <option value="5">ISO 14230-4 KWP (inicio rápido)</option>
+              <option value="4">ISO 14230-4 KWP (inicio 5 baudios)</option>
+              <option value="3">ISO 9141-2</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button id="btnConnect" class="primary">Conectar</button>
+            <button id="btnDisconnect" disabled>Desconectar</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Registro de conexión</h2>
+          <ol id="connLog" class="steps"><li class="muted">Sin conexión.</li></ol>
+          <table id="connSummary" class="kv hidden"></table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Antes de conectar</h2>
+        <ul class="tips">
+          <li>En el C4 la toma OBD suele estar bajo el salpicadero, en el lado del conductor (a veces detrás de la tapa de fusibles).</li>
+          <li>Pon el contacto. Para datos en vivo, arranca el motor con el coche parado.</li>
+          <li>Bluetooth: empareja antes el adaptador en el sistema (PIN 1234 o 0000). Aparece como un puerto serie más.</li>
+          <li>WiFi: conecta el ordenador a la red del adaptador. Lo normal es 192.168.0.10, puerto 35000.</li>
+          <li>Los adaptadores clónicos baratos fallan a menudo con respuestas largas; un OBDLink o un ELM327 de calidad va mucho mejor.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- VEHÍCULOS Y CENTRALITAS -->
+    <section id="sec-vehicles" class="section">
+      <h1>Vehículos y centralitas</h1>
+      <p class="lead">Tu biblioteca de fichas. La ficha activa se usa en toda la app: protocolo, averías propias de la marca, parámetros recomendados, orden de bytes de los archivos, etiquetas de mapas y contexto del asistente.</p>
+      <div class="toolbar">
+        <button id="btnProfAI" class="primary">Añadir con IA</button>
+        <button id="btnProfManual">Añadir a mano</button>
+        <label class="file-btn">Importar…<input type="file" id="profImport" accept=".json,application/json"></label>
+        <button id="btnProfExportAll" class="ghost">Exportar biblioteca</button>
+      </div>
+      <div class="veh-layout">
+        <div class="card">
+          <h2>Fichas <span class="count" id="profCount"></span></h2>
+          <div id="profList" class="prof-list"></div>
+        </div>
+        <div class="card" id="profEditor"></div>
+      </div>
+    </section>
+
+    <!-- IDENTIFICACIÓN -->
+    <section id="sec-ident" class="section">
+      <h1>Identificación de la centralita</h1>
+      <p class="lead">El Calibration ID y el CVN identifican el software exacto de la centralita: es lo primero que necesitas antes de preparar o buscar un archivo.</p>
+      <div class="actions">
+        <button id="btnIdent" class="primary needs-conn">Leer identificación</button>
+        <button id="btnUds" class="needs-conn">Identificación avanzada (UDS)</button>
+        <button id="btnIdentCopy" class="ghost">Copiar</button>
+        <button id="btnIdentAI" class="ghost">Preguntar a la IA</button>
+        <button id="btnIdentProf" class="ghost">Crear ficha con esta lectura</button>
+      </div>
+      <div class="card">
+        <h2>Datos OBD (modo 09)</h2>
+        <table class="kv" id="identTable"><tr><td class="muted">Conecta y pulsa «Leer identificación».</td></tr></table>
+      </div>
+      <div class="card">
+        <h2>UDS, servicio 0x22 (experimental)</h2>
+        <p class="muted small">Lee identificadores estándar. Muchas centralitas PSA usan identificadores propios, así que es normal que algunos salgan como no disponibles.</p>
+        <table class="data" id="udsTable"></table>
+      </div>
+    </section>
+
+    <!-- AVERÍAS -->
+    <section id="sec-dtc" class="section">
+      <h1>Averías</h1>
+      <div class="actions">
+        <button id="btnDtcRead" class="primary needs-conn">Leer averías</button>
+        <button id="btnDtcClear" class="danger needs-conn">Borrar averías</button>
+        <button id="btnDtcAI" class="ghost">Explicar con IA</button>
+      </div>
+      <div id="milBox" class="banner hidden"></div>
+      <div class="grid3">
+        <div class="card"><h2>Memorizadas <span class="count" id="cntStored"></span></h2><div id="dtcStored" class="dtc-list"><p class="muted small">Sin leer.</p></div></div>
+        <div class="card"><h2>Pendientes <span class="count" id="cntPending"></span></h2><div id="dtcPending" class="dtc-list"><p class="muted small">Sin leer.</p></div></div>
+        <div class="card"><h2>Permanentes <span class="count" id="cntPermanent"></span></h2><div id="dtcPermanent" class="dtc-list"><p class="muted small">Sin leer.</p></div></div>
+      </div>
+    </section>
+
+    <!-- DATOS EN VIVO -->
+    <section id="sec-live" class="section">
+      <h1>Datos en vivo</h1>
+      <div class="toolbar">
+        <button id="btnLiveStart" class="primary needs-conn">Iniciar</button>
+        <button id="btnLiveStop" disabled>Parar</button>
+        <button id="btnRec" class="needs-conn"><span class="rec-dot" aria-hidden="true"></span>Grabar</button>
+        <span id="recInfo" class="muted small"></span>
+        <button id="btnCsv" class="ghost" disabled>Exportar CSV</button>
+        <button id="btnLiveAI" class="ghost">Analizar con IA</button>
+        <button id="btnProfPids" class="ghost">PIDs de la ficha</button>
+        <span class="spacer"></span>
+        <span id="liveHz" class="muted small"></span>
+      </div>
+      <details class="card" id="pidPicker" open>
+        <summary>Parámetros seleccionados: <span id="pidCount">0</span></summary>
+        <div id="pidList" class="pid-list"><p class="muted small">Conecta para ver qué parámetros admite la centralita.</p></div>
+      </details>
+      <div id="liveCards" class="live-grid"></div>
+    </section>
+
+    <!-- LOGS -->
+    <section id="sec-logs" class="section">
+      <h1>Logs</h1>
+      <p class="lead">Graba cómo responde el motor (un tirón a fondo o un recorrido) y revísalo después: todas las señales en la misma línea de tiempo, detección de tirones con sus máximos y comparación de un log con otro, por ejemplo antes y después de una reprogramación.</p>
+      <div class="toolbar">
+        <button id="btnLogRec" class="primary needs-conn"><span class="rec-dot" aria-hidden="true"></span>Grabar log</button>
+        <span id="logRecInfo" class="muted small"></span>
+        <label class="file-btn">Abrir log…<input type="file" id="logOpen" accept=".csv,text/csv,text/plain" multiple></label>
+        <button id="btnLogSave" class="ghost" disabled>Guardar CSV</button>
+        <button id="btnLogAI" class="ghost" disabled>Analizar con IA</button>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Qué grabar</h2>
+          <div class="seg small" id="logPreset" role="radiogroup">
+            <label><input type="radio" name="logPreset" value="pull" checked><span>Tirón (potencia)</span></label>
+            <label><input type="radio" name="logPreset" value="diag"><span>Diagnóstico</span></label>
+            <label><input type="radio" name="logPreset" value="custom"><span>Personalizado</span></label>
+          </div>
+          <p class="log-pid-sum" id="logPidSummary"></p>
+          <p class="muted small" id="logPidHint"></p>
+          <details class="log-pick">
+            <summary class="small">Elegir parámetros uno a uno</summary>
+            <div id="logPidList" class="pid-list"></div>
+          </details>
+        </div>
+        <div class="card">
+          <h2>Cómo hacer un tirón</h2>
+          <ul class="tips">
+            <li>Motor a temperatura (refrigerante por encima de 80 °C).</li>
+            <li>En 3.ª o 4.ª, desde unas 1.500 rpm, pisa a fondo hasta cerca del corte (unos 4.200 rpm en el 1.6 HDi).</li>
+            <li>Para comparar dos logs, repite el tirón en la misma marcha, el mismo tramo y con condiciones parecidas.</li>
+            <li>Hazlo solo en un circuito o una vía cerrada, y que maneje el ordenador un acompañante: no mires la pantalla mientras conduces.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="panel-head"><h2>Logs <span class="count" id="logCount"></span></h2></div>
+        <div id="logList"></div>
+      </div>
+      <div class="card" id="logViewCard">
+        <div class="panel-head">
+          <h2 id="logViewTitle">Gráfica</h2>
+          <div class="log-view-tools">
+            <span class="muted small">Arrastra para ampliar · rueda para zoom · doble clic para verlo entero</span>
+            <button id="btnLogZoomReset" class="ghost">Ver todo</button>
+          </div>
+        </div>
+        <div id="logChartWrap" class="log-chart-wrap"><canvas id="logChart"></canvas></div>
+      </div>
+      <div class="card" id="logPullsCard">
+        <h2>Tirones a fondo <span class="count" id="logPullCount"></span></h2>
+        <p class="muted small">Tramos con el pedal por encima del 80 % durante al menos 1,5 s y el régimen subiendo. La sobrepresión es MAP menos la presión barométrica.</p>
+        <div id="logPulls"></div>
+      </div>
+      <div class="card hidden" id="logDynoCard">
+        <div class="panel-head">
+          <h2>Dinamómetro virtual</h2>
+          <div class="legend" id="dynoLegend"></div>
+        </div>
+        <div class="dyno-params">
+          <div class="field"><label for="dynoMass">Peso total (kg)</label><input id="dynoMass" inputmode="decimal"></div>
+          <div class="field"><label for="dynoCda">CdA (m²)</label><input id="dynoCda" inputmode="decimal"></div>
+          <div class="field"><label for="dynoCrr">Rodadura (Crr)</label><input id="dynoCrr" inputmode="decimal"></div>
+          <div class="field"><label for="dynoLoss">Pérdidas de transmisión (%)</label><input id="dynoLoss" inputmode="decimal"></div>
+          <button id="btnDynoReset" class="ghost">Valores típicos</button>
+        </div>
+        <p class="muted small">Peso total: coche en orden de marcha + ocupantes + combustible (un C4 1.6 HDi con conductor ronda los 1.400 kg). CdA: aerodinámica por superficie frontal (C4: unos 0,68 m²). Pérdidas: lo que se queda entre el motor y las ruedas (tracción delantera manual: 12–15 %).</p>
+        <div id="dynoWarn"></div>
+        <div id="dynoTable"></div>
+        <div id="dynoCharts" class="cmp-grid"></div>
+        <p class="muted small">Es una estimación a partir de la aceleración del coche: cuenta con un margen de error del 5–10 % y depende de que el peso y las pérdidas sean correctos. Para comparar serie y Stage 1 lo que importa es hacer los dos tirones igual: misma marcha, mismo tramo llano, sin viento y, si puedes, en los dos sentidos. Ponles nombre con «Renombrar» (por ejemplo «Serie» y «Stage 1») y usa «Comparar».</p>
+      </div>
+      <div class="card hidden" id="logCmpCard">
+        <div class="panel-head">
+          <h2>Comparación por régimen</h2>
+          <div class="log-view-tools">
+            <label class="inline">A <select id="logCmpPullA"></select></label>
+            <label class="inline">B <select id="logCmpPullB"></select></label>
+          </div>
+        </div>
+        <div class="legend" id="logCmpLegend"></div>
+        <div id="logCmpTable"></div>
+        <div id="logCmpCharts" class="cmp-grid"></div>
+        <p class="muted small">Para que la comparación sirva, los dos tirones tienen que ser en la misma marcha y con condiciones parecidas (pendiente, carga, temperatura).</p>
+      </div>
+    </section>
+
+    <!-- ARCHIVO .BIN -->
+    <section id="sec-bin" class="section">
+      <h1>Archivo de la centralita</h1>
+      <p class="lead">Abre una lectura (.bin / .ori) hecha con tu herramienta (KESS, KTAG, Autotuner…). Los cambios se hacen en una copia de trabajo: el original no se toca. ReproChip no corrige el checksum.</p>
+      <div class="toolbar">
+        <label class="file-btn primary">Abrir original…<input type="file" id="fileA" accept=".bin,.ori,.mod,.dump,.rom,application/octet-stream"></label>
+        <label class="file-btn">Comparar con modificado…<input type="file" id="fileB" accept=".bin,.ori,.mod,.dump,.rom,application/octet-stream"></label>
+        <select id="endian" aria-label="Orden de bytes">
+          <option value="auto">Orden de bytes: automático</option>
+          <option value="little">Little-endian (EDC17)</option>
+          <option value="big">Big-endian (EDC16)</option>
+        </select>
+        <span class="spacer"></span>
+        <button id="btnBinAI" class="ghost" disabled>Preguntar a la IA</button>
+      </div>
+      <div id="binEmpty" class="empty">Abre un archivo para empezar. En la carpeta <code>samples</code> del proyecto tienes un original y un modificado de demostración (sintéticos).</div>
+      <div id="binContent" class="hidden">
+        <div class="grid2">
+          <div class="card" id="binInfo"></div>
+          <div class="card" id="diffInfo"></div>
+        </div>
+        <div class="bin-layout">
+          <div class="card maps-panel">
+            <div class="panel-head">
+              <h2>Mapas encontrados <span class="count" id="mapCount"></span></h2>
+              <label class="chk"><input type="checkbox" id="onlyChanged"> Solo con cambios</label>
+            </div>
+            <div id="mapList" class="map-list"></div>
+          </div>
+          <div class="card map-viewer">
+            <div id="mapHead" class="panel-head"><h2>Selecciona un mapa</h2></div>
+            <div class="map-controls">
+              <div class="seg small" id="viewMode" role="radiogroup">
+                <label><input type="radio" name="vmode" value="ori" checked><span>Original</span></label>
+                <label><input type="radio" name="vmode" value="mod"><span>Modificado</span></label>
+                <label><input type="radio" name="vmode" value="diff"><span>Diferencia %</span></label>
+              </div>
+              <label class="inline">Factor <input id="mFactor" type="number" step="any" value="1"></label>
+              <label class="inline">Offset <input id="mOffset" type="number" step="any" value="0"></label>
+              <label class="inline">Decimales <input id="mDec" type="number" min="0" max="4" value="0"></label>
+              <label class="chk"><input type="checkbox" id="mSigned"> Con signo</label>
+              <label class="chk"><input type="checkbox" id="mTranspose"> Transponer</label>
+              <label class="chk"><input type="checkbox" id="mOrder"> Invertir orden de datos</label>
+              <button id="btnMapAI" class="ghost" disabled>¿Qué mapa es?</button>
+            </div>
+            <div class="label-row">
+              <label class="inline grow">Etiqueta <input id="lblName" list="lblNames" placeholder="Nombre del mapa (p. ej. Presión de turbo objetivo)"></label>
+              <datalist id="lblNames"></datalist>
+              <label class="inline">Unidad <input id="lblUnit" placeholder="mbar"></label>
+              <button id="btnLblSave" disabled>Guardar en la ficha</button>
+              <button id="btnLblDel" class="ghost hidden">Quitar etiqueta</button>
+              <span id="lblHint" class="muted small"></span>
+            </div>
+            <div class="edit-row" id="editRow">
+              <button id="btnEditStart" class="primary" disabled>Editar mapa</button>
+              <span id="editIntro" class="muted small">Crea una copia de trabajo del archivo y modifica sus celdas. El original no se toca.</span>
+              <div id="editTools" class="edit-tools hidden">
+                <span id="selInfo" class="muted small">Clic y arrastra para seleccionar celdas</span>
+                <div class="btn-group">
+                  <button data-step="-5" class="ghost">−5 %</button><button data-step="-1" class="ghost">−1 %</button><button data-step="1" class="ghost">+1 %</button><button data-step="5" class="ghost">+5 %</button>
+                </div>
+                <select id="editOp" aria-label="Operación">
+                  <option value="pct">Sumar %</option>
+                  <option value="add">Sumar valor</option>
+                  <option value="set">Fijar valor</option>
+                </select>
+                <input id="editVal" type="number" step="any" value="3" aria-label="Valor">
+                <button id="btnEditApply">Aplicar</button>
+                <button id="btnInterp" class="ghost" title="Rellena en línea recta entre los extremos de la selección">Interpolar</button>
+                <button id="btnSmooth" class="ghost" title="Media con las celdas vecinas">Suavizar</button>
+                <button id="btnUndo" class="ghost" title="Ctrl+Z">Deshacer</button>
+                <button id="btnRedo" class="ghost" title="Ctrl+Y">Rehacer</button>
+                <span class="spacer"></span>
+                <button id="btnEditAI" class="ghost">Revisar con IA</button>
+                <button id="btnEditEnd" class="ghost">Terminar edición</button>
+                <button id="btnSaveBin" class="primary">Guardar copia .bin…</button>
+              </div>
+            </div>
+            <div id="mapTableWrap" class="map-table-wrap"></div>
+            <p id="editKeys" class="muted small hidden">Atajos: <code>+</code> / <code>−</code> suben o bajan un 1 % · <code>Ctrl+A</code> todo el mapa · clic en un eje: fila o columna entera · <code>Mayús</code>+clic amplía la selección · <code>Ctrl+Z</code> / <code>Ctrl+Y</code> deshacer y rehacer · <code>Esc</code> quita la selección.</p>
+            <div id="mapLegend" class="legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="panel-head">
+            <h2>Visor hexadecimal</h2>
+            <div class="hex-nav">
+              <input id="hexGoto" placeholder="0x040000" aria-label="Ir a dirección">
+              <button id="hexGo" class="ghost">Ir</button>
+              <button id="hexPrev" class="ghost" aria-label="Anterior">◀</button>
+              <button id="hexNext" class="ghost" aria-label="Siguiente">▶</button>
+              <button id="hexNextDiff" class="ghost">Siguiente cambio</button>
+            </div>
+          </div>
+          <pre id="hexView" class="hex"></pre>
+          <div class="legend small"><span class="sw sw-map"></span>Mapa seleccionado <span class="sw sw-axis"></span>Ejes <span class="sw sw-diff"></span>Byte distinto en el modificado</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ASISTENTE IA -->
+    <section id="sec-ai" class="section">
+      <h1>Asistente IA</h1>
+      <div id="aiNotice" class="banner warn hidden"></div>
+      <div class="ai-layout">
+        <div class="card chat">
+          <div id="chatLog" class="chat-log">
+            <div class="msg assistant"><div class="bubble"><p>Hola. Puedo explicarte las averías, revisar los datos en vivo o ayudarte a identificar mapas del archivo. Con cada pregunta envío el contexto que marques a la derecha.</p></div></div>
+          </div>
+          <div class="chat-input">
+            <textarea id="chatInput" rows="3" placeholder="Pregunta sobre averías, datos en vivo o mapas… (Ctrl+Intro para enviar)"></textarea>
+            <button id="btnSend" class="primary">Enviar</button>
+          </div>
+        </div>
+        <div class="card side">
+          <h2>Contexto que se envía</h2>
+          <label class="chk"><input type="checkbox" id="ctxVehicle" checked> Ficha del vehículo activo</label>
+          <label class="chk"><input type="checkbox" id="ctxIdent" checked> Identificación</label>
+          <label class="chk"><input type="checkbox" id="ctxDtc" checked> Averías</label>
+          <label class="chk"><input type="checkbox" id="ctxLive" checked> Datos en vivo</label>
+          <label class="chk"><input type="checkbox" id="ctxLog" checked> Log seleccionado</label>
+          <label class="chk"><input type="checkbox" id="ctxBin" checked> Archivo y mapa</label>
+          <h2>Preguntas rápidas</h2>
+          <button class="quick" data-q="Explícame las averías leídas: causa probable en este motor, cómo comprobarlas y qué revisar primero.">Explicar averías</button>
+          <button class="quick" data-q="Analiza los datos en vivo: ¿hay algo fuera de lo normal en turbo, caudalímetro, presión de rail o EGR?">Revisar datos en vivo</button>
+          <button class="quick" data-q="Revisa el log seleccionado: ¿cómo responde el motor en los tirones (turbo, rail, caudal de aire, temperaturas)? ¿Hay algo fuera de lo normal?">Revisar log</button>
+          <button class="quick" data-q="Según los ejes y valores, ¿qué mapa crees que es el seleccionado y qué unidades tendría?">¿Qué mapa es?</button>
+          <button class="quick" data-q="Resume las diferencias entre el original y el modificado: qué mapas se han tocado y si los cambios parecen coherentes.">Comparar ORI y MOD</button>
+          <button id="btnChatClear" class="ghost">Nueva conversación</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TERMINAL -->
+    <section id="sec-term" class="section">
+      <h1>Terminal</h1>
+      <p class="lead">Comandos AT y peticiones OBD/UDS en hexadecimal. Está en modo solo lectura: se bloquean escritura, programación, rutinas y acceso de seguridad.</p>
+      <div class="card term">
+        <pre id="termLog" class="term-log"></pre>
+        <div class="term-input">
+          <input id="termCmd" placeholder="Ej.: ATRV, ATDP, 010C, 0902, 22F190" autocomplete="off" spellcheck="false">
+          <button id="btnTermSend" class="primary needs-conn">Enviar</button>
+          <button id="btnTermClear" class="ghost">Limpiar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section id="sec-settings" class="section">
+      <h1>Ajustes</h1>
+      <div class="grid2">
+        <div class="card">
+          <h2>API de Claude</h2>
+          <p class="muted small">La clave se guarda solo en este ordenador (cifrada cuando el sistema lo permite) y únicamente la usa el proceso principal de la app. Se consigue en console.anthropic.com.</p>
+          <div class="field"><label for="apiKey">Clave de API</label><input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></div>
+          <p id="keyStatus" class="small"></p>
+          <div class="field"><label for="model">Modelo</label><input id="model" placeholder="claude-sonnet-5-5"></div>
+          <div class="actions">
+            <button id="btnSaveKey" class="primary">Guardar</button>
+            <button id="btnDeleteKey" class="ghost">Borrar clave</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Apariencia</h2>
+          <div class="theme-pick" role="radiogroup" aria-label="Tema">
+            <label><input type="radio" name="theme" value="dark" checked><span class="theme-card"><span class="theme-prev dark"><span class="sb"></span><span class="mn"><span class="ln ac"></span><span class="ln"></span><span class="ln"></span></span></span><span class="tn">Oscuro</span></span></label>
+            <label><input type="radio" name="theme" value="light"><span class="theme-card"><span class="theme-prev light"><span class="sb"></span><span class="mn"><span class="ln ac"></span><span class="ln"></span><span class="ln"></span></span></span><span class="tn">Claro</span></span></label>
+            <label><input type="radio" name="theme" value="system"><span class="theme-card"><span class="theme-prev system"></span><span class="tn">Como el sistema</span></span></label>
+          </div>
+          <p class="muted small">«Como el sistema» cambia solo cuando cambias entre modo claro y oscuro en Windows.</p>
+        </div>
+        <div class="card">
+          <h2>Vehículos</h2>
+          <p class="muted small">Los datos del coche y de la centralita están ahora en la pestaña <a href="#" id="goVehicles">Vehículos</a>, donde puedes tener varias fichas y crearlas con la IA.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Acerca de ReproChip</h2>
+        <p class="small muted">Versión 0.3. Lee la centralita por OBD (identificación, averías y datos en vivo), analiza archivos .bin y edita mapas en una copia del archivo. No escribe en la centralita ni corrige checksums: para leer o escribir el flash completo usa una herramienta profesional.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <h2 id="modalTitle"></h2>
+    <div id="modalBody"></div>
+    <div class="actions right" id="modalActions"></div>
+  </div>
+</div>
+<div id="toast" class="toast hidden" role="status"></div>
+<div id="tooltip" class="tooltip hidden"></div>
+
+<script src="lib/elm327.js"></script>
+<script src="lib/obd.js"></script>
+<script src="lib/datalog.js"></script>
+<script src="lib/transport.js"></script>
+<script src="lib/simulator.js"></script>
+<script src="lib/binanalyzer.js"></script>
+<script src="lib/ai.js"></script>
+<script src="lib/profiles.js"></script>
+<script src="lib/mapedit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

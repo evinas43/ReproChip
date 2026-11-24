@@ -1,0 +1,54 @@
+{
+  "name": "reprochip",
+  "productName": "ReproChip",
+  "version": "0.3.0",
+  "description": "ReproChip: lectura de centralitas por OBD (ELM327 / OBDLink) y análisis de archivos .bin con asistente de IA",
+  "main": "main.js",
+  "author": "ReproChip",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/run-tests.js",
+    "samples": "node scripts/make-samples.js",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^45.3.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.reprochip.app",
+    "productName": "ReproChip",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json",
+      "build/icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "samples",
+        "to": "samples"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.utilities"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Utility"
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "icon": "build/icon.png"
+  }
+}
